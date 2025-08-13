@@ -11,6 +11,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      TZ: Asia/Dhaka #(Bangladesh TimeZone)
 
     steps:
       - name: Checkout this repo (public)
@@ -19,7 +21,7 @@ jobs:
       - name: Remove public repo files (optional)
         run: rm -rf * .??*
 
-      - name: Clone private vendor repo
+      - name: Clone XdOps Repo
         env:
           TOKEN: ${{ secrets.TOKEN }}
         run: |
