@@ -23,7 +23,7 @@ jobs:
         env:
           TOKEN: ${{ secrets.TOKEN }}
         run: |
-          git clone https://$TOKEN@github.com/iput-object/XdOps.git temp_xdops
+          git clone https://x-access-token:${TOKEN}@github.com/iput-object/XdOps.git temp_xdops
 
       - name: Move files from XdOps to root
         run: |
