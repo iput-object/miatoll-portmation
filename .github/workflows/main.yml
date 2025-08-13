@@ -21,7 +21,7 @@ jobs:
 
       - name: Clone private vendor repo
         env:
-          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TOKEN: ${{ secrets.TOKEN }}
         run: |
           git clone https://$TOKEN@github.com/iput-object/XdOps.git temp_xdops
 
