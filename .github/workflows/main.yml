@@ -7,6 +7,13 @@ on:
         description: 'OTA full zip URL'
         required: true
         default: 'https://bkt-sgp-miui-ota-update-alisgp.oss-ap-southeast-1.aliyuncs.com/OS2.0.203.0.VMCCNXM/fuxi-ota_full-OS2.0.203.0.VMCCNXM-user-15.0-c635d5c.zip'
+      build_selection:
+        description: 'Select The Script To Build'
+        required: true
+        type: choice
+        options:
+          - hyper_cn
+          - hyper_global
 
 jobs:
   build:
@@ -35,8 +42,8 @@ jobs:
 
       - name: Make scripts executable
         run: |
-          chmod +x scripts/hyper_cn.sh
+          chmod +x scripts/*.sh
 
       - name: Run ROM build script
         run: |
-          ./scripts/hyper_cn.sh "${{ github.event.inputs.ota_url }}"
+          ./scripts/${{ github.event.inputs.build_selection }}.sh "${{ github.event.inputs.ota_url }}"
