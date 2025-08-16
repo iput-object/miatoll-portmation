@@ -12,8 +12,9 @@ on:
         required: true
         type: choice
         options:
-          - hyper_cn
-          - hyper_global
+          - miatoll_hyper_cn
+          - miatoll_hyper_global
+          - miatoll_oplus
 
 jobs:
   build:
