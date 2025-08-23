@@ -41,10 +41,10 @@ jobs:
           mv temp_xdops/* .
           rm -rf temp_xdops
 
-      - name: Make scripts executable
+      - name: Make rom-scripts executable
         run: |
-          chmod +x scripts/*.sh
+          chmod +x rom-scripts/*.sh
 
       - name: Run ROM build script
         run: |
-          ./scripts/${{ github.event.inputs.build_selection }}.sh "${{ github.event.inputs.ota_url }}"
+          ./rom-scripts/${{ github.event.inputs.build_selection }}.sh "${{ github.event.inputs.ota_url }}"
