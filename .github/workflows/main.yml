@@ -1,4 +1,5 @@
 name: Miatoll Port-Mation
+run-name: ${{ github.event.inputs.build_name }}
 
 on:
   workflow_dispatch:
@@ -6,6 +7,7 @@ on:
       build_name:
         description: 'Input Job Name'
         required: true
+        default: 'Miatoll Port-Mation'
       ota_url:
         description: 'OTA full zip URL'
         required: true
