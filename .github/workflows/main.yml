@@ -18,7 +18,8 @@ on:
         options:
           - miatoll_hyper_cn
           - miatoll_hyper_global
-          - miatoll_oplus
+          - miatoll_oplus_cn
+          - miatoll_oplus_global
 
 jobs:
   build:
