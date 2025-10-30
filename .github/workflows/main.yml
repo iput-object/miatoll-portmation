@@ -20,6 +20,7 @@ on:
           - miatoll_hyper_global
           - miatoll_oplus_cn
           - miatoll_oplus_global
+          - miatoll_moto_cn
 
 jobs:
   build:
