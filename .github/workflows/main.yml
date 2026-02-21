@@ -21,6 +21,7 @@ on:
           - miatoll_oplus_cn
           - miatoll_oplus_global
           - miatoll_moto_cn
+          - miatoll_hyper_xiaomieu
 
 jobs:
   build:
