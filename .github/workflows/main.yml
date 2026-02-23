@@ -5,14 +5,25 @@ on:
   workflow_dispatch:
     inputs:
       build_name:
-        description: 'Input Job Name'
+        description: "Input Job Name"
         required: true
-        default: 'Miatoll Port-Mation'
+        default: "Miatoll Port-Mation"
+
       ota_url:
-        description: 'OTA full zip URL'
+        description: "OTA full zip URL"
         required: true
+
+      xdops_branch:
+        description: "XdOps branch to clone"
+        required: true
+        type: choice
+        options:
+          - main
+          - beta
+        default: "main"
+
       build_selection:
-        description: 'Select The Script To Build'
+        description: "Select The Script To Build"
         required: true
         type: choice
         options:
@@ -28,7 +39,7 @@ jobs:
     name: ${{ github.event.inputs.build_name }}
     runs-on: ubuntu-latest
     env:
-      TZ: Asia/Dhaka #(Bangladesh TimeZone)
+      TZ: Asia/Dhaka
 
     steps:
       - name: Checkout this repo (public)
@@ -41,7 +52,8 @@ jobs:
         env:
           TOKEN: ${{ secrets.TOKEN }}
         run: |
-          git clone https://x-access-token:${TOKEN}@github.com/iput-object/XdOps.git temp_xdops
+          git clone -b ${{ github.event.inputs.xdops_branch }} --single-branch \
+          https://x-access-token:${TOKEN}@github.com/iput-object/XdOps.git temp_xdops
 
       - name: Move files from XdOps to root
         run: |
@@ -50,9 +62,9 @@ jobs:
           rm -rf temp_xdops
 
       - name: Make rom-scripts executable
-        run: |
-          chmod +x rom-scripts/*.sh
+        run: chmod +x rom-scripts/*.sh
 
       - name: Run ROM build script
         run: |
-          ./rom-scripts/${{ github.event.inputs.build_selection }}.sh "${{ github.event.inputs.ota_url }}"
+          ./rom-scripts/${{ github.event.inputs.build_selection }}.sh \
+          "${{ github.event.inputs.ota_url }}"
