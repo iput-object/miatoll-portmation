@@ -33,6 +33,11 @@ on:
           - miatoll_oplus_global
           - miatoll_moto_cn
           - miatoll_hyper_xiaomieu
+      is_debug:
+        description: "Enable debug mode"
+        required: true
+        type: boolean
+        default: false
 
 jobs:
   build:
@@ -64,20 +69,9 @@ jobs:
       - name: Make rom-scripts executable
         run: chmod +x rom-scripts/*.sh
 
-      - name: Reclaim disk and split workdirs
-        run: |
-          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache
-          sudo docker image prune --all --force || true
-          sudo mkdir -p /mnt/rom-work
-          sudo chown -R $USER:$USER /mnt/rom-work
-          mkdir -p $HOME/rom-work
-          {
-            echo "FAST_WORK_DIR=/mnt/rom-work"
-            echo "PARTS_DIR=/mnt/rom-work/parts"
-            echo "ROM_WORK_DIR=$HOME/rom-work"
-          } >> $GITHUB_ENV
-
       - name: Run ROM build script
+        env:
+          IS_DEBUG: ${{ github.event.inputs.is_debug }}
         run: |
           ./rom-scripts/${{ github.event.inputs.build_selection }}.sh \
           "${{ github.event.inputs.ota_url }}"
