@@ -33,6 +33,7 @@ on:
           - miatoll_oplus_global
           - miatoll_moto_cn
           - miatoll_hyper_xiaomieu
+
       is_debug:
         description: "Enable debug mode"
         required: true
@@ -46,12 +47,38 @@ jobs:
     env:
       TZ: Asia/Dhaka
 
+      # Force XdOps work dirs to larger mount
+      ROM_WORK_DIR: /mnt/romwork
+      FAST_WORK_DIR: /mnt/romwork
+      INPUT_DIR: /mnt/romwork/input
+      TEMP_DIR: /mnt/romwork/temp
+      KITCHEN_DIR: /mnt/romwork/kitchen
+      OUTPUT_DIR: /mnt/romwork/output
+
     steps:
       - name: Checkout this repo (public)
         uses: actions/checkout@v4
 
+      - name: Show disk before cleanup
+        run: df -h
+
+      - name: Free runner disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /usr/local/lib/android
+          sudo apt-get clean
+          docker system prune -af || true
+          df -h
+
+      - name: Prepare /mnt workspace
+        run: |
+          sudo mkdir -p /mnt/romwork/{input,temp,kitchen,output}
+          sudo chown -R "$USER:$USER" /mnt/romwork
+          df -h
+
       - name: Remove public repo files (optional)
-        run: rm -rf * .??*
+        run: rm -rf * .??* || true
 
       - name: Clone XdOps Repo
         env:
@@ -75,3 +102,18 @@ jobs:
         run: |
           ./rom-scripts/${{ github.event.inputs.build_selection }}.sh \
           "${{ github.event.inputs.ota_url }}"
+
+      - name: Show disk after build
+        if: always()
+        run: df -h
+
+      - name: Upload output artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-output-${{ github.run_id }}
+          path: |
+            /mnt/romwork/output/**
+            /mnt/romwork/temp/**
+            logs/**
+          if-no-files-found: warn
