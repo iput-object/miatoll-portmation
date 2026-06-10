@@ -106,14 +106,3 @@ jobs:
       - name: Show disk after build
         if: always()
         run: df -h
-
-      - name: Upload output artifacts
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-output-${{ github.run_id }}
-          path: |
-            /mnt/romwork/output/**
-            /mnt/romwork/temp/**
-            logs/**
-          if-no-files-found: warn
