@@ -34,6 +34,12 @@ on:
           - miatoll_moto_cn
           - miatoll_hyper_xiaomieu
 
+      super_size:
+        description: "Super size (in GB)"
+        required: true
+        type: string
+        default: "8"
+
       is_debug:
         description: "Enable debug mode"
         required: true
@@ -99,6 +105,7 @@ jobs:
       - name: Run ROM build script
         env:
           IS_DEBUG: ${{ github.event.inputs.is_debug }}
+          SUPER_SIZE: ${{ github.event.inputs.super_size }}
         run: |
           ./rom-scripts/${{ github.event.inputs.build_selection }}.sh \
           "${{ github.event.inputs.ota_url }}"
