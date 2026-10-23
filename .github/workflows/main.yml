@@ -13,6 +13,12 @@ on:
         description: "OTA full zip URL"
         required: true
 
+      kernel_url:
+        description: "Kernel zip URL (AnyKernel3, empty keeps template kernel)"
+        required: false
+        type: string
+        default: ""
+
       xdops_branch:
         description: "XdOps branch to clone"
         required: true
@@ -106,6 +112,7 @@ jobs:
         env:
           IS_DEBUG: ${{ github.event.inputs.is_debug }}
           SUPER_SIZE: ${{ github.event.inputs.super_size }}
+          KERNEL_URL: ${{ github.event.inputs.kernel_url }}
         run: |
           ./rom-scripts/${{ github.event.inputs.build_selection }}.sh \
           "${{ github.event.inputs.ota_url }}"
