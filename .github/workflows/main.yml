@@ -19,6 +19,15 @@ on:
         type: string
         default: ""
 
+      rom_fs:
+        description: "Partition filesystem (erofs needs an erofs kernel_url)"
+        required: true
+        type: choice
+        options:
+          - ext4
+          - erofs
+        default: "ext4"
+
       xdops_branch:
         description: "XdOps branch to clone"
         required: true
@@ -113,6 +122,7 @@ jobs:
           IS_DEBUG: ${{ github.event.inputs.is_debug }}
           SUPER_SIZE: ${{ github.event.inputs.super_size }}
           KERNEL_URL: ${{ github.event.inputs.kernel_url }}
+          ROM_FS: ${{ github.event.inputs.rom_fs }}
         run: |
           ./rom-scripts/${{ github.event.inputs.build_selection }}.sh \
           "${{ github.event.inputs.ota_url }}"
