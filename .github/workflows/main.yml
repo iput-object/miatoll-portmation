@@ -109,12 +109,7 @@ jobs:
           sudo apt-get install -y \
             android-sdk-libsparse-utils erofs-utils zstd unzip brotli cpio \
             openjdk-17-jre-headless
-          # lpmake / lpunpack for super.img
-          git clone --depth 1 -b lptools-bins https://github.com/Danda420/RomTools lptools
-          chmod 755 lptools/lp*
-          sudo mv lptools/lp* /usr/local/bin/
-          rm -rf lptools
-          command -v lpmake lpunpack
+          # lpmake/lpunpack and the other native tools ship in xdkit's vendor/bin
 
       - name: Install uv
         uses: astral-sh/setup-uv@v6
