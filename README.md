@@ -3,6 +3,8 @@
 This repository contains a **personal** GitHub Actions workflow I use to automate ROM porting.
 It was created due to rising hosting and development costs — so instead of running heavy processes locally, I offload them to GitHub’s CI.
 
+This branch (`xdkit`) builds with the xdkit recipes (`xdkit rom build`); `main` still runs the XdOps scripts.
+
 ⚠ **Disclaimer**
 
 * This workflow is **for my own use only** and is not intended as a public service.

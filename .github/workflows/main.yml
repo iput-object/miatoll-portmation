@@ -28,32 +28,46 @@ on:
           - erofs
         default: "ext4"
 
-      xdops_branch:
-        description: "XdOps branch to clone"
+      xdkit_branch:
+        description: "xdkit branch to clone"
         required: true
         type: choice
         options:
-          - main
           - beta
-        default: "main"
+        default: "beta"
 
-      build_selection:
-        description: "Select The Script To Build"
+      recipe:
+        description: "Select The Recipe To Build"
         required: true
         type: choice
         options:
-          - miatoll_hyper_cn
-          - miatoll_hyper_global
-          - miatoll_oplus_cn
-          - miatoll_oplus_global
-          - miatoll_moto_cn
-          - miatoll_hyper_xiaomieu
+          - miatoll-hyper-cn
+          - miatoll-hyper-global
+          - miatoll-hyper-xiaomieu
+          - miatoll-oplus-cn
+          - miatoll-oplus-global
+          - miatoll-moto-cn
 
       super_size:
         description: "Super size (in GB)"
         required: true
         type: string
         default: "8"
+
+      selinux:
+        description: "SELinux mode in the boot.img"
+        required: true
+        type: choice
+        options:
+          - permissive
+          - enforcing
+        default: "permissive"
+
+      upload:
+        description: "Upload to Pixeldrain and post to Telegram"
+        required: true
+        type: boolean
+        default: true
 
       is_debug:
         description: "Enable debug mode"
@@ -67,19 +81,10 @@ jobs:
     runs-on: ubuntu-latest
     env:
       TZ: Asia/Dhaka
-
-      # Force XdOps work dirs to larger mount
+      # big work dir on the runner's larger mount
       ROM_WORK_DIR: /mnt/romwork
-      FAST_WORK_DIR: /mnt/romwork
-      INPUT_DIR: /mnt/romwork/input
-      TEMP_DIR: /mnt/romwork/temp
-      KITCHEN_DIR: /mnt/romwork/kitchen
-      OUTPUT_DIR: /mnt/romwork/output
 
     steps:
-      - name: Checkout this repo (public)
-        uses: actions/checkout@v4
-
       - name: Show disk before cleanup
         run: df -h
 
@@ -94,38 +99,77 @@ jobs:
 
       - name: Prepare /mnt workspace
         run: |
-          sudo mkdir -p /mnt/romwork/{input,temp,kitchen,output}
-          sudo chown -R "$USER:$USER" /mnt/romwork
+          sudo mkdir -p "$ROM_WORK_DIR"
+          sudo chown -R "$USER:$USER" "$ROM_WORK_DIR"
           df -h
 
-      - name: Remove public repo files (optional)
-        run: rm -rf * .??* || true
+      - name: Install build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            android-sdk-libsparse-utils erofs-utils zstd unzip brotli cpio \
+            openjdk-17-jre-headless
+          # lpmake / lpunpack for super.img
+          git clone --depth 1 -b lptools-bins https://github.com/Danda420/RomTools lptools
+          chmod 755 lptools/lp*
+          sudo mv lptools/lp* /usr/local/bin/
+          rm -rf lptools
+          command -v lpmake lpunpack
 
-      - name: Clone XdOps Repo
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Clone xdkit
+        env:
+          TOKEN: ${{ secrets.TOKEN }}
+          BRANCH: ${{ github.event.inputs.xdkit_branch }}
+        run: |
+          git clone --depth 1 -b "$BRANCH" --single-branch \
+            "https://x-access-token:${TOKEN}@github.com/iput-object/xdkit.git" xdkit
+
+      - name: Fetch port assets and API tokens from XdOps
         env:
           TOKEN: ${{ secrets.TOKEN }}
         run: |
-          git clone -b ${{ github.event.inputs.xdops_branch }} --single-branch \
-          https://x-access-token:${TOKEN}@github.com/iput-object/XdOps.git temp_xdops
+          git clone --depth 1 --filter=blob:none --sparse \
+            "https://x-access-token:${TOKEN}@github.com/iput-object/XdOps.git" xdops
+          git -C xdops sparse-checkout set --no-cone '/assets/port/' '/tool/secrets/api_tokens'
+          mkdir -p xdkit/workbase/assets
+          mv xdops/assets/port xdkit/workbase/assets/port
+          du -sh xdkit/workbase/assets/port
 
-      - name: Move files from XdOps to root
-        run: |
-          shopt -s dotglob
-          mv temp_xdops/* .
-          rm -rf temp_xdops
+          # expose the tokens to later steps, masked in every log
+          set -a
+          . xdops/tool/secrets/api_tokens
+          set +a
+          for name in PIXELDRAIN_API_KEY TELEGRAM_BOT_TOKEN TELEGRAM_CHANNEL_ID HYPER_VENDOR_API; do
+            value="${!name:-}"
+            [ -n "$value" ] || { echo "$name not set"; continue; }
+            echo "::add-mask::$value"
+            echo "$name=$value" >> "$GITHUB_ENV"
+          done
+          rm -rf xdops
 
-      - name: Make rom-scripts executable
-        run: chmod +x rom-scripts/*.sh
+      - name: Install xdkit
+        working-directory: xdkit
+        run: uv sync --frozen --no-dev
 
-      - name: Run ROM build script
+      - name: Build ROM
+        working-directory: xdkit
         env:
-          IS_DEBUG: ${{ github.event.inputs.is_debug }}
-          SUPER_SIZE: ${{ github.event.inputs.super_size }}
+          RECIPE: ${{ github.event.inputs.recipe }}
+          OTA_URL: ${{ github.event.inputs.ota_url }}
           KERNEL_URL: ${{ github.event.inputs.kernel_url }}
           ROM_FS: ${{ github.event.inputs.rom_fs }}
+          SUPER_SIZE: ${{ github.event.inputs.super_size }}
+          SELINUX: ${{ github.event.inputs.selinux }}
+          UPLOAD: ${{ github.event.inputs.upload }}
+          XDKIT_LOG: ${{ github.event.inputs.is_debug == 'true' && 'debug' || 'info' }}
         run: |
-          ./rom-scripts/${{ github.event.inputs.build_selection }}.sh \
-          "${{ github.event.inputs.ota_url }}"
+          args=(--work "$ROM_WORK_DIR" --fs "$ROM_FS" --super-size "$SUPER_SIZE" --selinux "$SELINUX")
+          [ -n "$KERNEL_URL" ] && args+=(--kernel "$KERNEL_URL")
+          [ "$UPLOAD" = "true" ] && args+=(--upload --post)
+          uv run --no-dev xdkit rom build "$RECIPE" "$OTA_URL" "${args[@]}"
 
       - name: Show disk after build
         if: always()
