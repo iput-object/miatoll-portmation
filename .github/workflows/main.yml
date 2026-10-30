@@ -116,11 +116,17 @@ jobs:
 
       - name: Clone xdkit
         env:
-          TOKEN: ${{ secrets.TOKEN }}
+          # read-only deploy key on iput-object/xdkit
+          DEPLOY_KEY: ${{ secrets.XDKIT_DEPLOY_KEY }}
           BRANCH: ${{ github.event.inputs.xdkit_branch }}
         run: |
-          git clone --depth 1 -b "$BRANCH" --single-branch \
-            "https://x-access-token:${TOKEN}@github.com/iput-object/xdkit.git" xdkit
+          key="$RUNNER_TEMP/xdkit_key"
+          printf '%s\n' "$DEPLOY_KEY" > "$key"
+          chmod 600 "$key"
+          GIT_SSH_COMMAND="ssh -i $key -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new" \
+            git clone --depth 1 -b "$BRANCH" --single-branch \
+            git@github.com:iput-object/xdkit.git xdkit
+          rm -f "$key"
 
       - name: Fetch port assets and API tokens from XdOps
         env:
