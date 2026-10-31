@@ -167,10 +167,20 @@ jobs:
           UPLOAD: ${{ github.event.inputs.upload }}
           XDKIT_LOG: ${{ github.event.inputs.is_debug == 'true' && 'debug' || 'info' }}
         run: |
-          args=(--work "$ROM_WORK_DIR" --fs "$ROM_FS" --super-size "$SUPER_SIZE" --selinux "$SELINUX")
+          # --report: on failure, send xdkit-build.log to Telegram
+          args=(--root "$ROM_WORK_DIR" --fs "$ROM_FS" --super-size "$SUPER_SIZE" --selinux "$SELINUX"
+                --report)
           [ -n "$KERNEL_URL" ] && args+=(--kernel "$KERNEL_URL")
           [ "$UPLOAD" = "true" ] && args+=(--upload --post)
           uv run --no-dev xdkit rom build "$RECIPE" "$OTA_URL" "${args[@]}"
+
+      - name: Upload build log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xdkit-build-log
+          path: ${{ env.ROM_WORK_DIR }}/output/xdkit-build.log
+          if-no-files-found: ignore
 
       - name: Show disk after build
         if: always()
