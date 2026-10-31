@@ -174,14 +174,6 @@ jobs:
           [ "$UPLOAD" = "true" ] && args+=(--upload --post)
           uv run --no-dev xdkit rom build "$RECIPE" "$OTA_URL" "${args[@]}"
 
-      - name: Upload build log
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: xdkit-build-log
-          path: ${{ env.ROM_WORK_DIR }}/output/xdkit-build.log
-          if-no-files-found: ignore
-
       - name: Show disk after build
         if: always()
         run: df -h
