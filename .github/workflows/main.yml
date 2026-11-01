@@ -70,7 +70,7 @@ on:
         default: true
 
       is_debug:
-        description: "Enable debug mode"
+        description: "Debug: verbose log + adb from early boot (vendor debug props)"
         required: true
         type: boolean
         default: false
@@ -166,12 +166,15 @@ jobs:
           SELINUX: ${{ github.event.inputs.selinux }}
           UPLOAD: ${{ github.event.inputs.upload }}
           XDKIT_LOG: ${{ github.event.inputs.is_debug == 'true' && 'debug' || 'info' }}
+          IS_DEBUG: ${{ github.event.inputs.is_debug }}
         run: |
           # --report: on failure, send xdkit-build.log to Telegram
           args=(--root "$ROM_WORK_DIR" --fs "$ROM_FS" --super-size "$SUPER_SIZE" --selinux "$SELINUX"
                 --report)
           [ -n "$KERNEL_URL" ] && args+=(--kernel "$KERNEL_URL")
           [ "$UPLOAD" = "true" ] && args+=(--upload --post)
+          # debug: vendor build.prop debug props on (adb from early boot, for bootloops)
+          [ "$IS_DEBUG" = "true" ] && args+=(--debug-props)
           uv run --no-dev xdkit rom build "$RECIPE" "$OTA_URL" "${args[@]}"
 
       - name: Show disk after build
