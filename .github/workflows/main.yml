@@ -28,14 +28,6 @@ on:
           - erofs
         default: "ext4"
 
-      xdkit_branch:
-        description: "xdkit branch to clone"
-        required: true
-        type: choice
-        options:
-          - beta
-        default: "beta"
-
       recipe:
         description: "Select The Recipe To Build"
         required: true
@@ -62,6 +54,12 @@ on:
           - enforcing
           - permissive
         default: "enforcing"
+
+      changelog:
+        description: "What's new for the Telegram post (items split by ';')"
+        required: false
+        type: string
+        default: ""
 
       upload:
         description: "Upload to Pixeldrain and post to Telegram"
@@ -118,7 +116,7 @@ jobs:
         env:
           # read-only deploy key on iput-object/xdkit
           DEPLOY_KEY: ${{ secrets.XDKIT_DEPLOY_KEY }}
-          BRANCH: ${{ github.event.inputs.xdkit_branch }}
+          BRANCH: beta
         run: |
           key="$RUNNER_TEMP/xdkit_key"
           printf '%s\n' "$DEPLOY_KEY" > "$key"
@@ -165,6 +163,7 @@ jobs:
           SUPER_SIZE: ${{ github.event.inputs.super_size }}
           SELINUX: ${{ github.event.inputs.selinux }}
           UPLOAD: ${{ github.event.inputs.upload }}
+          CHANGELOG: ${{ github.event.inputs.changelog }}
           XDKIT_LOG: ${{ github.event.inputs.is_debug == 'true' && 'debug' || 'info' }}
           IS_DEBUG: ${{ github.event.inputs.is_debug }}
         run: |
@@ -173,6 +172,7 @@ jobs:
                 --report)
           [ -n "$KERNEL_URL" ] && args+=(--kernel "$KERNEL_URL")
           [ "$UPLOAD" = "true" ] && args+=(--upload --post)
+          [ -n "$CHANGELOG" ] && args+=(--changelog "$CHANGELOG")
           # debug: vendor build.prop debug props on (adb from early boot, for bootloops)
           [ "$IS_DEBUG" = "true" ] && args+=(--debug-props)
           uv run --no-dev xdkit rom build "$RECIPE" "$OTA_URL" "${args[@]}"
