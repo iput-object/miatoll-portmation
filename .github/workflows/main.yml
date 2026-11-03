@@ -59,9 +59,9 @@ on:
         required: true
         type: choice
         options:
-          - permissive
           - enforcing
-        default: "permissive"
+          - permissive
+        default: "enforcing"
 
       upload:
         description: "Upload to Pixeldrain and post to Telegram"
