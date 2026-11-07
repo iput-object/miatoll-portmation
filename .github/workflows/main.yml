@@ -79,17 +79,11 @@ jobs:
     runs-on: ubuntu-latest
     env:
       TZ: Asia/Dhaka
-      # big work dir on the runner's larger mount
-      ROM_WORK_DIR: /mnt/romwork
+      ROM_WORK_DIR: ${{ github.workspace }}/romwork
 
     steps:
       - name: Free runner disk space
         uses: rokibhasansagar/slimhub_actions@main
-
-      - name: Prepare /mnt workspace
-        run: |
-          sudo mkdir -p "$ROM_WORK_DIR"
-          sudo chown -R "$USER:$USER" "$ROM_WORK_DIR"
 
       - name: Install build tools
         run: |
