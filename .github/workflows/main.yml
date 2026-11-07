@@ -110,29 +110,6 @@ jobs:
             git@github.com:iput-object/xdkit.git xdkit
           rm -f "$key"
 
-      - name: Fetch port assets and API tokens from XdOps
-        env:
-          TOKEN: ${{ secrets.TOKEN }}
-        run: |
-          git clone --depth 1 --filter=blob:none --sparse \
-            "https://x-access-token:${TOKEN}@github.com/iput-object/XdOps.git" xdops
-          git -C xdops sparse-checkout set --no-cone '/assets/port/' '/tool/secrets/api_tokens'
-          mkdir -p xdkit/workbase/assets
-          mv xdops/assets/port xdkit/workbase/assets/port
-          du -sh xdkit/workbase/assets/port
-
-          # expose the tokens to later steps, masked in every log
-          set -a
-          . xdops/tool/secrets/api_tokens
-          set +a
-          for name in PIXELDRAIN_API_KEY TELEGRAM_BOT_TOKEN TELEGRAM_CHANNEL_ID HYPER_VENDOR_API; do
-            value="${!name:-}"
-            [ -n "$value" ] || { echo "$name not set"; continue; }
-            echo "::add-mask::$value"
-            echo "$name=$value" >> "$GITHUB_ENV"
-          done
-          rm -rf xdops
-
       - name: Install xdkit
         working-directory: xdkit
         run: uv sync --frozen --no-dev
@@ -140,6 +117,10 @@ jobs:
       - name: Build ROM
         working-directory: xdkit
         env:
+          PIXELDRAIN_API_KEY: ${{ secrets.PIXELDRAIN_API_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHANNEL_ID: ${{ secrets.TELEGRAM_CHANNEL_ID }}
+          HYPER_VENDOR_API: ${{ secrets.HYPER_VENDOR_API }}
           RECIPE: ${{ github.event.inputs.recipe }}
           OTA_URL: ${{ github.event.inputs.ota_url }}
           KERNEL_URL: ${{ github.event.inputs.kernel_url }}
